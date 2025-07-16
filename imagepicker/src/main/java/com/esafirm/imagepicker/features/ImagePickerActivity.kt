@@ -11,8 +11,8 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import com.esafirm.imagepicker.R
+import com.esafirm.imagepicker.databinding.EfActivityImagePickerBinding
 import com.esafirm.imagepicker.features.cameraonly.CameraOnlyConfig
 import com.esafirm.imagepicker.helper.ConfigUtils
 import com.esafirm.imagepicker.helper.ImagePickerUtils
@@ -27,6 +27,7 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
 
     private var actionBar: ActionBar? = null
     private lateinit var imagePickerFragment: ImagePickerFragment
+    private lateinit var binding: EfActivityImagePickerBinding
 
     private val config: ImagePickerConfig? by lazy {
         intent.extras!!.getParcelable(ImagePickerConfig::class.java.simpleName)
@@ -78,7 +79,11 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
 
         val currentConfig = config!!
         setTheme(currentConfig.theme)
-        setContentView(R.layout.ef_activity_image_picker)
+
+        // Initialize ViewBinding
+        binding = EfActivityImagePickerBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         setupView(currentConfig)
 
         if (savedInstanceState != null) {
@@ -91,6 +96,12 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
             ft.replace(R.id.ef_imagepicker_fragment_placeholder, imagePickerFragment)
             ft.commit()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // ViewBinding doesn't require explicit cleanup for Activities
+        // as the binding is automatically cleared when the Activity is destroyed
     }
 
     /**
@@ -143,8 +154,7 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
     }
 
     private fun setupView(config: ImagePickerConfig) {
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
+        setSupportActionBar(binding.toolbar.root as androidx.appcompat.widget.Toolbar)
         actionBar = supportActionBar
         actionBar?.run {
             val arrowDrawable = ViewUtils.getArrowIcon(this@ImagePickerActivity)
