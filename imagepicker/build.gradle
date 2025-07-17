@@ -2,6 +2,7 @@ plugins {
     id "com.android.library"
     id "kotlin-android"
     id "kotlin-parcelize"
+    id "maven-publish"  // Add this
 }
 
 android {
@@ -44,20 +45,41 @@ android {
     namespace 'com.esafirm.imagepicker'
 }
 
-// ✅ Tambahkan ini di luar blok android
 kotlin {
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
+// Fixed sourcesJar task
 tasks.register("sourcesJar", Jar) {
     from android.sourceSets.main.java.srcDirs
     archiveClassifier.set('sources')
 }
 
-artifacts {
-    archives sourcesJar
+// Add publishing configuration
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'com.github.turvoiz'
+                artifactId = 'android-image-picker'
+                version = 'v1.0.5'
+
+                // Add sources jar
+                artifact sourcesJar
+            }
+        }
+    }
+}
+
+// Fix task dependencies
+tasks.whenTaskAdded { task ->
+    if (task.name.contains('generateMetadataFileFor') && task.name.contains('Publication')) {
+        task.dependsOn sourcesJar
+    }
 }
 
 dependencies {
