@@ -6,13 +6,12 @@ plugins {
 }
 
 android {
-    final sdk = rootProject.ext.sdk
 
-    compileSdk sdk.compileSdk
+    compileSdk 35
 
     defaultConfig {
-        minSdk sdk.minSdk
-        targetSdk sdk.targetSdk
+        minSdk 21
+        targetSdk 35
     }
 
     buildFeatures {
@@ -85,7 +84,7 @@ dependencies {
     implementation "com.github.bumptech.glide:glide:4.14.2"
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation "androidx.core:core-ktx:$core_ktx_version"
+    implementation "androidx.core:core-ktx:1.10.1"
 
     testImplementation platform("org.junit:junit-bom:5.9.1")
     testImplementation "org.junit.jupiter:junit-jupiter"

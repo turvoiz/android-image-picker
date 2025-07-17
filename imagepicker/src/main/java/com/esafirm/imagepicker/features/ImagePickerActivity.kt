@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.PorterDuff
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -20,6 +21,13 @@ import com.esafirm.imagepicker.helper.IpCrasher
 import com.esafirm.imagepicker.helper.LocaleManager
 import com.esafirm.imagepicker.helper.ViewUtils
 import com.esafirm.imagepicker.model.Image
+import android.util.Log
+import android.view.View
+import android.view.WindowInsetsController
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import com.esafirm.imagepicker.features.common.BaseConfig
 
 class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener {
 
@@ -32,7 +40,6 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
     private val config: ImagePickerConfig? by lazy {
         intent.extras!!.getParcelable(ImagePickerConfig::class.java.simpleName)
     }
-
     private val cameraOnlyConfig: CameraOnlyConfig? by lazy {
         intent.extras?.getParcelable(CameraOnlyConfig::class.java.simpleName)
     }
@@ -72,6 +79,9 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
         }
 
         if (isCameraOnly) {
+            // Apply system bar colors even for camera-only mode
+            cameraOnlyConfig?.let { setupSystemBars(it) }
+
             val cameraIntent = cameraModule.getCameraIntent(this, cameraOnlyConfig!!)
             startForCameraResult.launch(cameraIntent)
             return
@@ -79,6 +89,9 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
 
         val currentConfig = config!!
         setTheme(currentConfig.theme)
+
+        // Apply system bar colors
+        setupSystemBars(currentConfig)
 
         // Initialize ViewBinding
         binding = EfActivityImagePickerBinding.inflate(layoutInflater)
@@ -95,6 +108,93 @@ class ImagePickerActivity : AppCompatActivity(), ImagePickerInteractionListener 
             val ft = supportFragmentManager.beginTransaction()
             ft.replace(R.id.ef_imagepicker_fragment_placeholder, imagePickerFragment)
             ft.commit()
+        }
+    }
+
+    private fun setupSystemBars(config: BaseConfig) {
+        val statusBarColor = when (config) {
+            is ImagePickerConfig -> config.statusBarColor
+            else -> ImagePickerConfig.NO_COLOR
+        }
+
+        val navigationBarColor = when (config) {
+            is ImagePickerConfig -> config.navigationBarColor
+            else -> ImagePickerConfig.NO_COLOR
+        }
+
+        val lightStatusBar = when (config) {
+            is ImagePickerConfig -> config.lightStatusBar
+            else -> false
+        }
+
+        val lightNavigationBar = when (config) {
+            is ImagePickerConfig -> config.lightNavigationBar
+            else -> false
+        }
+
+        window.apply {
+            // Set status bar color
+            if (statusBarColor != ImagePickerConfig.NO_COLOR) {
+                this.statusBarColor = statusBarColor
+            }
+
+            // Set navigation bar color
+            if (navigationBarColor != ImagePickerConfig.NO_COLOR) {
+                this.navigationBarColor = navigationBarColor
+            }
+
+            // Modern approach for Android 11+ (API 30+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Ensure the decor view is available
+                val decorView = window.decorView
+                if (decorView != null) {
+                    val controller = decorView.windowInsetsController
+                    if (controller != null) {
+                        // Set status bar appearance
+                        if (lightStatusBar) {
+                            controller.setSystemBarsAppearance(
+                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                            )
+                        } else {
+                            controller.setSystemBarsAppearance(
+                                0,
+                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                            )
+                        }
+
+                        // Set navigation bar appearance
+                        if (lightNavigationBar) {
+                            controller.setSystemBarsAppearance(
+                                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                            )
+                        } else {
+                            controller.setSystemBarsAppearance(
+                                0,
+                                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Fallback for older versions
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (lightStatusBar) {
+                        decorView.systemUiVisibility = decorView.systemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    } else {
+                        decorView.systemUiVisibility = decorView.systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                    }
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (lightNavigationBar) {
+                        decorView.systemUiVisibility = decorView.systemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+                    } else {
+                        decorView.systemUiVisibility = decorView.systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+                    }
+                }
+            }
         }
     }
 
