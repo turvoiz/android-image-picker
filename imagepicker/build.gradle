@@ -62,22 +62,23 @@ afterEvaluate {
     publishing {
         publications {
             imagepicker(MavenPublication) {
-                from components.release
-
                 groupId = 'com.github.turvoiz'
                 artifactId = 'android-image-picker'
-                version = 'v1.0.5'
+                version = 'v1.0.8'
 
-                // Add sources jar with proper dependency
+                // Add artifacts manually instead of using components.release
+                artifact bundleReleaseAar
                 artifact sourcesJar
+
+                // Add POM configuration
+                pom {
+                    packaging = 'aar'
+                    name = 'Android Image Picker'
+                    description = 'A simple library to select images from gallery and camera'
+                }
             }
         }
     }
-}
-
-// Fix the task dependency issue
-tasks.matching { it.name.startsWith('generateMetadataFileFor') && it.name.endsWith('Publication') }.configureEach {
-    dependsOn sourcesJar
 }
 
 dependencies {
