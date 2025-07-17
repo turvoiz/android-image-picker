@@ -2,7 +2,7 @@ plugins {
     id "com.android.library"
     id "kotlin-android"
     id "kotlin-parcelize"
-    id "maven-publish"  // Add this
+    id "maven-publish"
 }
 
 android {
@@ -51,35 +51,33 @@ kotlin {
     }
 }
 
-// Fixed sourcesJar task
+// Create sourcesJar task
 tasks.register("sourcesJar", Jar) {
     from android.sourceSets.main.java.srcDirs
     archiveClassifier.set('sources')
 }
 
-// Add publishing configuration
+// Publishing configuration
 afterEvaluate {
     publishing {
         publications {
-            release(MavenPublication) {
+            imagepicker(MavenPublication) {
                 from components.release
 
                 groupId = 'com.github.turvoiz'
                 artifactId = 'android-image-picker'
                 version = 'v1.0.5'
 
-                // Add sources jar
+                // Add sources jar with proper dependency
                 artifact sourcesJar
             }
         }
     }
 }
 
-// Fix task dependencies
-tasks.whenTaskAdded { task ->
-    if (task.name.contains('generateMetadataFileFor') && task.name.contains('Publication')) {
-        task.dependsOn sourcesJar
-    }
+// Fix the task dependency issue
+tasks.matching { it.name.startsWith('generateMetadataFileFor') && it.name.endsWith('Publication') }.configureEach {
+    dependsOn sourcesJar
 }
 
 dependencies {
