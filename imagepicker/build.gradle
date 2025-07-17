@@ -44,6 +44,13 @@ android {
     namespace 'com.esafirm.imagepicker'
 }
 
+// ✅ Tambahkan ini di luar blok android
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 tasks.register("sourcesJar", Jar) {
     from android.sourceSets.main.java.srcDirs
     archiveClassifier.set('sources')
